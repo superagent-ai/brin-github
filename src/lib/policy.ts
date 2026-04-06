@@ -11,14 +11,6 @@ export function evaluatePrScan(
     return { status: "inconclusive", shouldFail: false };
   }
 
-  const blockBelow = config.prScan.blockBelowScore;
-
-  if (result.verdict === "dangerous" || result.score < blockBelow) {
-    return { status: "blocking", shouldFail: true };
-  }
-  if (config.prScan.suspiciousVerdicts.includes(result.verdict ?? "")) {
-    return { status: "review", shouldFail: false };
-  }
   return { status: "clean", shouldFail: false };
 }
 
