@@ -136,3 +136,7 @@ npm run build        # compile to dist/
 ```
 
 For local webhook testing, use a tunnel like [smee.io](https://smee.io) or [ngrok](https://ngrok.com) to forward GitHub webhooks to `localhost:3000/api/github/webhook`.
+
+## License
+
+MIT
