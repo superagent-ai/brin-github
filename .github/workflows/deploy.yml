@@ -39,6 +39,6 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy
-        run: railway up --detach
+        run: railway up --detach --service brin-app
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
