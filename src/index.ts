@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { app as githubApp } from "./app.js";
@@ -32,6 +33,43 @@ server.post("/api/github/webhook", async (c) => {
     logger.error({ err, deliveryId: id }, "Webhook processing error");
     return c.json({ error: "processing_error" }, 500);
   }
+});
+
+server.post("/api/github/marketplace", async (c) => {
+  const signature = c.req.header("x-hub-signature-256") ?? "";
+  const body = await c.req.text();
+
+  if (env.marketplaceWebhookSecret) {
+    const expected =
+      "sha256=" +
+      createHmac("sha256", env.marketplaceWebhookSecret)
+        .update(body)
+        .digest("hex");
+    const sigBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expected);
+    if (
+      sigBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(sigBuffer, expectedBuffer)
+    ) {
+      logger.warn("Invalid Marketplace webhook signature");
+      return c.json({ error: "invalid_signature" }, 400);
+    }
+  }
+
+  const event = JSON.parse(body);
+  logger.info(
+    {
+      action: event.action,
+      marketplace_purchase: {
+        plan: event.marketplace_purchase?.plan?.name,
+        account: event.marketplace_purchase?.account?.login,
+      },
+      sender: event.sender?.login,
+    },
+    "Marketplace event received",
+  );
+
+  return c.json({ ok: true });
 });
 
 server.get("/health", (c) => c.json({ status: "ok" }));

@@ -20,6 +20,9 @@ export const env = {
   get port() {
     return parseInt(process.env.PORT ?? "3000", 10);
   },
+  get marketplaceWebhookSecret() {
+    return process.env.MARKETPLACE_WEBHOOK_SECRET ?? "";
+  },
   get logLevel() {
     return process.env.LOG_LEVEL ?? "info";
   },
