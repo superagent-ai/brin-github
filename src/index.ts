@@ -5,7 +5,7 @@ import { app as githubApp } from "./app.js";
 import { registerEventHandlers } from "./events/index.js";
 import { env } from "./lib/env.js";
 import { logger } from "./lib/logger.js";
-import { queries } from "./lib/db.js";
+import { queries, saveInstallation } from "./lib/db.js";
 
 registerEventHandlers(githubApp);
 
@@ -71,6 +71,49 @@ server.post("/api/github/marketplace", async (c) => {
   );
 
   return c.json({ ok: true });
+});
+
+server.post("/api/installations/sync", async (c) => {
+  try {
+    let synced = 0;
+
+    for await (const { installation } of githubApp.eachInstallation.iterator()) {
+      const octokit = await githubApp.getInstallationOctokit(installation.id);
+      const repos: { name: string; full_name: string; private: boolean }[] = [];
+
+      for await (const response of octokit.paginate.iterator(
+        octokit.rest.apps.listReposAccessibleToInstallation,
+        { per_page: 100 },
+      )) {
+        for (const repo of response.data) {
+          repos.push({
+            name: repo.name,
+            full_name: repo.full_name,
+            private: repo.private,
+          });
+        }
+      }
+
+      saveInstallation(
+        {
+          id: installation.id,
+          account: {
+            login: installation.account?.login ?? "unknown",
+            type: installation.account?.type ?? "User",
+          },
+          repository_selection: installation.repository_selection ?? "selected",
+        },
+        repos,
+      );
+      synced++;
+    }
+
+    logger.info({ synced }, "Installation sync complete");
+    return c.json({ ok: true, synced });
+  } catch (err: unknown) {
+    logger.error({ err }, "Installation sync failed");
+    return c.json({ error: "sync_failed" }, 500);
+  }
 });
 
 server.get("/api/installations", (c) => {
