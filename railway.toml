@@ -7,3 +7,6 @@ healthcheckPath = "/health"
 healthcheckTimeout = 10
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
+
+[[deploy.mounts]]
+mountPath = "/data"

@@ -5,6 +5,7 @@ import { app as githubApp } from "./app.js";
 import { registerEventHandlers } from "./events/index.js";
 import { env } from "./lib/env.js";
 import { logger } from "./lib/logger.js";
+import { queries } from "./lib/db.js";
 
 registerEventHandlers(githubApp);
 
@@ -70,6 +71,22 @@ server.post("/api/github/marketplace", async (c) => {
   );
 
   return c.json({ ok: true });
+});
+
+server.get("/api/installations", (c) => {
+  const all = c.req.query("all") === "true";
+  const rows = all
+    ? queries.getAllInstallations.all()
+    : queries.getActiveInstallations.all();
+  const stats = queries.getStats.get() as Record<string, number>;
+
+  const installations = (rows as any[]).map((r) => ({
+    ...r,
+    repos: r.repos ? r.repos.split(",") : [],
+    active: !!r.active,
+  }));
+
+  return c.json({ stats, installations });
 });
 
 server.get("/health", (c) => c.json({ status: "ok" }));

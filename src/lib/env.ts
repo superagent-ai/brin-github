@@ -26,4 +26,7 @@ export const env = {
   get logLevel() {
     return process.env.LOG_LEVEL ?? "info";
   },
+  get dbPath() {
+    return process.env.DB_PATH ?? "/data/brin.db";
+  },
 } as const;
