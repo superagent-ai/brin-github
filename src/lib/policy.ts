@@ -1,9 +1,16 @@
 import type { PrScanResult, ContributorResult, RepoConfig, PrStatus } from "./types.js";
 
+export function hasPrScanError(result: PrScanResult): boolean {
+  return result.threats?.some((threat) => threat.type === "scan_error") ?? false;
+}
+
 export function evaluatePrScan(
   result: PrScanResult,
   config: RepoConfig,
 ): { status: PrStatus; shouldFail: boolean } {
+  if (hasPrScanError(result)) {
+    return { status: "inconclusive", shouldFail: false };
+  }
   if (result.score == null) {
     return { status: "inconclusive", shouldFail: false };
   }

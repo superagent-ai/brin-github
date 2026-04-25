@@ -62,6 +62,24 @@ describe("evaluatePrScan", () => {
     });
   });
 
+  it("returns inconclusive when Brin reports an internal scan error", () => {
+    const result: PrScanResult = {
+      score: 0,
+      verdict: "dangerous",
+      threats: [
+        {
+          type: "scan_error",
+          detail: "failed to fetch PR: GitHub API returned 404",
+        },
+      ],
+    };
+
+    expect(evaluatePrScan(result, config)).toEqual({
+      status: "inconclusive",
+      shouldFail: false,
+    });
+  });
+
   it("respects custom blockBelowScore threshold", () => {
     const custom: RepoConfig = {
       ...config,

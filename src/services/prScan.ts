@@ -9,7 +9,7 @@ import {
   deleteMarkerComment,
   renderPrScanComment,
 } from "./comments.js";
-import { ensureLabels, setLabel } from "./labels.js";
+import { clearLabels, ensureLabels, setLabel } from "./labels.js";
 import { childLogger } from "../lib/logger.js";
 
 const PR_LABELS = [LABEL_DEFS.PR_VERIFIED, LABEL_DEFS.PR_FLAGGED];
@@ -91,6 +91,8 @@ export async function runPrScan(
           ? "A deep scan is in progress. Results will update automatically."
           : "Unable to determine scan results at this time.",
       });
+      await clearLabels(octokit, owner, repo, prNumber, PR_LABEL_NAMES);
+      await deleteMarkerComment(octokit, owner, repo, prNumber, MARKERS.PR_SCAN);
       break;
     }
   }
