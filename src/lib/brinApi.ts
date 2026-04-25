@@ -6,13 +6,20 @@ export async function scanPr(
   owner: string,
   repo: string,
   prNumber: number,
-  tolerance = "conservative",
+  options: { tolerance?: string; githubToken?: string } = {},
 ): Promise<PrScanResult> {
+  const tolerance = options.tolerance ?? "conservative";
   const url = `${env.brinApiBase}/pr/${owner}/${repo}/${prNumber}?details=true&mode=full&tolerance=${tolerance}`;
   const log = childLogger({ service: "brin-api", endpoint: "pr", owner, repo, prNumber });
+  const headers = options.githubToken
+    ? { "X-GitHub-token": options.githubToken }
+    : undefined;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(300_000) });
+    const res = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(300_000),
+    });
     if (!res.ok) {
       log.warn({ status: res.status }, "Brin PR API returned non-OK status");
       return {};

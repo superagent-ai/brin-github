@@ -15,6 +15,14 @@ import { childLogger } from "../lib/logger.js";
 const PR_LABELS = [LABEL_DEFS.PR_VERIFIED, LABEL_DEFS.PR_FLAGGED];
 const PR_LABEL_NAMES = PR_LABELS.map((l) => l.name);
 
+async function getGitHubToken(octokit: Octokit): Promise<string | undefined> {
+  const auth = await octokit.auth({ type: "installation" });
+  if (auth && typeof auth === "object" && "token" in auth && typeof auth.token === "string") {
+    return auth.token;
+  }
+  return undefined;
+}
+
 export async function runPrScan(
   octokit: Octokit,
   params: {
@@ -41,7 +49,11 @@ export async function runPrScan(
     CHECK_NAMES.PR_SCAN,
   );
 
-  const result = await scanPr(owner, repo, prNumber, config.prScan.tolerance);
+  const githubToken = await getGitHubToken(octokit);
+  const result = await scanPr(owner, repo, prNumber, {
+    tolerance: config.prScan.tolerance,
+    githubToken,
+  });
   const { status, shouldFail } = evaluatePrScan(result, config);
 
   log.info(
