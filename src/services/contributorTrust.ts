@@ -9,6 +9,7 @@ import {
   deleteMarkerComment,
   renderContributorTrustComment,
 } from "./comments.js";
+import { getGitHubToken } from "./githubToken.js";
 import { ensureLabels, setLabel } from "./labels.js";
 import { childLogger } from "../lib/logger.js";
 
@@ -53,7 +54,8 @@ export async function runContributorTrust(
     CHECK_NAMES.CONTRIBUTOR_TRUST,
   );
 
-  const result = await scanContributor(authorLogin);
+  const githubToken = await getGitHubToken(octokit);
+  const result = await scanContributor(authorLogin, { githubToken });
   const { isSafe } = evaluateContributor(result, config);
 
   log.info(

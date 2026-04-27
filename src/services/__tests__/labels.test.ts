@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { ensureLabels, setLabel } from "../labels.js";
+import { clearLabels, ensureLabels, setLabel } from "../labels.js";
 
 function mockOctokit(overrides: Record<string, any> = {}) {
   return {
@@ -119,6 +119,32 @@ describe("setLabel", () => {
       repo: "repo",
       issue_number: 1,
       labels: ["contributor:verified"],
+    });
+  });
+});
+
+describe("clearLabels", () => {
+  it("removes brin labels and preserves unrelated labels", async () => {
+    const octokit = mockOctokit({
+      listLabelsOnIssue: vi.fn().mockResolvedValue({
+        data: [
+          { name: "bug" },
+          { name: "pr:flagged" },
+          { name: "enhancement" },
+        ],
+      }),
+    });
+
+    await clearLabels(octokit, "owner", "repo", 42, [
+      "pr:verified",
+      "pr:flagged",
+    ]);
+
+    expect(octokit.rest.issues.setLabels).toHaveBeenCalledWith({
+      owner: "owner",
+      repo: "repo",
+      issue_number: 42,
+      labels: ["bug", "enhancement"],
     });
   });
 });

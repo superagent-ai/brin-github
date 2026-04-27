@@ -64,3 +64,28 @@ export async function setLabel(
     labels: [...preserved, nextLabel],
   });
 }
+
+export async function clearLabels(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  brinLabelNames: readonly string[],
+): Promise<void> {
+  const { data: current } = await octokit.rest.issues.listLabelsOnIssue({
+    owner,
+    repo,
+    issue_number: issueNumber,
+  });
+
+  const preserved = current
+    .map((l) => l.name)
+    .filter((name) => !brinLabelNames.includes(name));
+
+  await octokit.rest.issues.setLabels({
+    owner,
+    repo,
+    issue_number: issueNumber,
+    labels: preserved,
+  });
+}
