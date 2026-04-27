@@ -12,7 +12,7 @@ export async function scanPr(
   const url = `${env.brinApiBase}/pr/${owner}/${repo}/${prNumber}?details=true&mode=full&tolerance=${tolerance}`;
   const log = childLogger({ service: "brin-api", endpoint: "pr", owner, repo, prNumber });
   const headers = options.githubToken
-    ? { "X-GitHub-token": options.githubToken }
+    ? { "x-github-token": options.githubToken }
     : undefined;
 
   try {
@@ -33,12 +33,21 @@ export async function scanPr(
   }
 }
 
-export async function scanContributor(login: string): Promise<ContributorResult> {
+export async function scanContributor(
+  login: string,
+  options: { githubToken?: string } = {},
+): Promise<ContributorResult> {
   const url = `${env.brinApiBase}/contributor/${login}?details=true&mode=full`;
   const log = childLogger({ service: "brin-api", endpoint: "contributor", login });
+  const headers = options.githubToken
+    ? { "x-github-token": options.githubToken }
+    : undefined;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    const res = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(30_000),
+    });
     if (!res.ok) {
       log.warn({ status: res.status }, "Brin contributor API returned non-OK status");
       return {};
